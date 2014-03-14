@@ -70,4 +70,4 @@ router.run();
 
 ## Licence
 
-Copyright (c) 2014 Kano Computing Ltd. - Released under the MIT license
+Copyright (c) 2014 Kano Computing Ltd. - Released under the [MIT license](https://github.com/KanoComputing/routy.js/blob/master/LICENSE)
