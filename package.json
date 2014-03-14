@@ -1,0 +1,20 @@
+{
+  "name": "routy",
+  "version": "0.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "mkdir -p build; browserify lib/browser.js -o build/Routy.js; uglifyjs build/Routy.js -o build/Routy.min.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "uglify-js": "~2.4.x",
+    "browserify": "~3.32.x"
+  },
+  "dependencies": {
+    "route-pattern": "0.0.x",
+    "tiny-emitter": "~0.1.x"
+  }
+}
