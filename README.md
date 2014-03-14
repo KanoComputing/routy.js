@@ -72,13 +72,17 @@ router.run();
 
 1. Clone the repo and install the dependencies
 
-    git clone git@github.com:KanoComputing/routy.js.git
-    cd routy.js
-    npm install
+```
+git clone git@github.com:KanoComputing/routy.js.git
+cd routy.js
+npm install
+```
 
 2. Update the build
 
-    npm run build
+```
+npm run build
+```
 
 ## Licence
 
