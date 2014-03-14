@@ -68,6 +68,18 @@ router.run();
 * `.stop()` - Stop listening to hash change events
 * `.refresh()` - Re-trigger route behaviour based on current path
 
+## Develop
+
+1. Clone the repo and install the dependencies
+
+    git clone git@github.com:KanoComputing/routy.js.git
+    cd routy.js
+    npm install
+
+2. Update the build
+
+    npm run build
+
 ## Licence
 
 Copyright (c) 2014 Kano Computing Ltd. - Released under the [MIT license](https://github.com/KanoComputing/routy.js/blob/master/LICENSE)
