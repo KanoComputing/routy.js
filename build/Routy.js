@@ -101,14 +101,14 @@ Router.prototype.getRouteByPath = function (path) {
 // Called when changing route, calls Route function and emits the 'change'
 //
 
-Router.prototype.setRoute = function (route, req) {
+Router.prototype.setRoute = function (route, evt) {
     this.route = route;
 
     if (this.route.fn) {
-        this.route.fn.call(req, this);
+        this.route.fn.call(this, evt);
     }
 
-    this.emit('change', req, route, this);
+    this.emit('change', evt, this);
 };
 
 //
@@ -117,26 +117,26 @@ Router.prototype.setRoute = function (route, req) {
 
 Router.prototype.refresh = function () {
     var path = location.hash.slice(1),
-        route = this.getRouteByPath(path);
+        route = this.getRouteByPath(path),
+        evt;
 
     if (!route) {
         location.href = '#' + this.defaultPath;
         return;
     }
 
-    var req = route.pattern.match(path);
+    evt = route.pattern.match(path);
+    evt.path = path;
+    evt.route = route;
 
-    req.path = path;
-    req.route = route;
-
-    this.emit('beforeChange', req, route, this);
+    this.emit('beforeChange', evt, this);
 
     if (this.cancel) {
         return;
     }
 
     this.path = path;
-    this.setRoute(route, req);
+    this.setRoute(route, evt);
 };
 
 module.exports = {
