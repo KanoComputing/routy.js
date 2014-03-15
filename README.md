@@ -41,7 +41,7 @@ myRouter
 ## Simple templates example
 
 ```javascript
-var Router = require('./Router');
+var Router = require('routy').Router;
 
 var router = new Router(),
     view = document.getElementById('view');
