@@ -19,19 +19,19 @@ var Router = Require('routy').Router;
 
 var myRouter = new Router();
 
-function index (req) {
-    // This controller function is called on with the Route object as `this`
-    // ...
+function index (route, req) {
+    console.log(route); // The Route instance (containing path, custom options, ..)
+    console.log(req);   // Will contained requested path, URL params, etc.. (If availabe, in different forms)
+    console.log(this);  // The Router instance - also containing current `.path` and `.route`
 }
 
 function logParams (req) {
-    console.log(req.namedParams);
+    console.log(req.namedParams);   // { apples: '..'}
 }
 
 function logOptions (req) {
     // Access route custom options. Boom!
-    console.log(this.options);
-    // { someOption: 'wooah' }
+    console.log(this.options);  // { someOption: 'wooah' }
 }
 
 myRouter
