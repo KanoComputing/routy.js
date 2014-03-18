@@ -39,7 +39,7 @@ myRouter
 .add('/foo/:apples', logParams)
 .add('/bar', logOptions, { someOption: 'wooah' })
 .on('change', function (req, route) {
-    console.log('Changing to path: ' + req.path)
+    console.log('Changing to path: ' + req.path);
 });
 ```
 
