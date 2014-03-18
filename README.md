@@ -25,13 +25,13 @@ function index (route, req) {
     console.log(this);  // The Router instance - also containing current `.path` and `.route`
 }
 
-function logParams (req) {
+function logParams (route, req) {
     console.log(req.namedParams);   // { apples: '..'}
 }
 
-function logOptions (req) {
+function logOptions (route, req) {
     // Access route custom options. Boom!
-    console.log(this.options);  // { someOption: 'wooah' }
+    console.log(route.options);  // { someOption: 'wooah' }
 }
 
 myRouter
