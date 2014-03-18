@@ -10,14 +10,17 @@ You can either use the module with npm
 
 Or include the file `build/Routy.js` in your HTML (which provides a wrapper at `window.Routy`)
 
-## Example Usage
+## Examples of usage
+
+### Simple usage with controller functions
 
 ```javascript
 var Router = Require('routy').Router;
 
 var myRouter = new Router();
 
-function index () {
+function index (req) {
+    // This controller function is called on with the Route object as `this`
     // ...
 }
 
@@ -26,7 +29,9 @@ function logParams (req) {
 }
 
 function logOptions (req) {
-    console.log(req.route.options);
+    // Access route custom options. Boom!
+    console.log(this.options);
+    // { someOption: 'wooah' }
 }
 
 myRouter
@@ -38,13 +43,15 @@ myRouter
 });
 ```
 
-## Simple templates example
+### Simple templates example
 
 ```javascript
 var Router = require('routy').Router;
 
 var router = new Router(),
     view = document.getElementById('view');
+
+// A full implementation would load templates from elsewhere
 
 router
 .add('/', { template: '<h1>Main</h1>' })
@@ -60,6 +67,56 @@ function changeView (req) {
 router.run();
 ```
 
+### Intercept route changes + redirect
+
+```javascript
+var Router = require('routy').Router;
+
+var router = new Router(),
+    isLoggedIn = false;
+
+router
+.add('/')
+.add('/private-view', { requiresLogin: true })  // Custom option
+.add('/login')
+.otherwise('/')
+.on('beforeChange', intercept);
+
+function intercept (req) {
+    if (req.route.options.requiresLogin) {
+        // Use the router.redirect property to redirect to a different path
+        router.redirect = '/login';
+    }
+}
+
+router.run();
+
+```
+
+### Intercept route changes + cancel
+
+```javascript
+var Router = require('routy').Router;
+
+var router = new Router();
+
+router
+.add('/')
+.add('/locked')
+.otherwise('/')
+.on('beforeChange', intercept);
+
+function intercept (req) {
+    if (req.route.path === '/locked') {
+        // Use the router.cancel property to prevent redirection
+        router.cancel = true;
+    }
+}
+
+router.run();
+
+```
+
 ## Router API
 
 * `.add(route_pattern, [ route_function ], [ route_options ])` - Add a route with custom options and callback function
@@ -67,6 +124,7 @@ router.run();
 * `.run()` - Start listening to hash change events
 * `.stop()` - Stop listening to hash change events
 * `.refresh()` - Re-trigger route behaviour based on current path
+* `.goTo(path)` - Direct to a given path
 
 ## Develop
 
