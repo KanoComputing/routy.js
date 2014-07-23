@@ -1,6 +1,6 @@
 {
   "name": "routy",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A dead simple module to manage hash routing in the browser.",
   "main": "lib/index.js",
   "scripts": {
