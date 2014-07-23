@@ -4,6 +4,8 @@ window.Routy = require('./index');
 var RoutePattern = require('route-pattern'),
     EventEmitter = require('tiny-emitter');
 
+var EXCLUDE_PATTERN = /(^(?!http|\/\/|::|magnet:)(.*)$)/;
+
 //
 // Route class (Initialised by Router instances)
 //
@@ -32,6 +34,12 @@ function Router () {
     this.path = '/';            // Current path (`/` is default)
     this.otherwise(this.path);  // Set default redirect
     this.cancel = false;        // Cancel next route change
+    this.redirect = null;       // Redirect next route change
+
+    this.recentReloads = 0;     // Number of reloads called in last 500ms
+    this.resetTimer = null;     // Timeout set to clear recent reloads
+
+    this.html5(false);          // Disable HTML5 mode by default
 }
 
 //
@@ -63,15 +71,82 @@ Router.prototype.otherwise = function (path) {
 //
 
 Router.prototype.run = function () {
-    var self = this;
-
     this.refresh();
 
-    this.hashListener = function () {
-        self.refresh();
-    };
+    if (this._html5) {
+        this.html5(true);
+    }
 
-    window.addEventListener('hashchange', this.hashListener);
+    this._changeListener = function () {
+        if (this._preventChange) {
+            this._preventChange = false;
+            return;
+        }
+
+        this._loc = location.pathname;
+        this.refresh();
+    }.bind(this);
+
+    window.addEventListener(this._changeEvent, this._changeListener);
+    return this;
+};
+
+//
+// Set HTML5 routes use
+//
+
+Router.prototype.html5 = function (state) {
+    this._html5 = typeof state === 'undefined' || state === null || state ? true : false;
+
+    if (this._html5) {
+        this.bindLinks();
+        this._changeEvent = 'popstate';
+    } else {
+        this.unBindLinks();
+        this._changeEvent = 'hashchange';
+    }
+
+    return this;
+};
+
+//
+// Delegate link click (Used in html5 mode)
+//
+
+Router.prototype.bindLinks = function () {
+    if (this._clickListener) {
+        return;
+    }
+
+    this._clickListener = function (e) {
+        var href = e.target.getAttribute('href'),
+            blankTarget = e.target.getAttribute('target') === '_blank',
+            specialKey = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+
+        if (href && EXCLUDE_PATTERN.test(href) && !blankTarget && !specialKey) {
+            e.preventDefault();
+
+            this.goTo(href, true);
+
+            if (href.indexOf('#') !== -1) {
+                this._preventChange = true;
+                window.location.hash = href.substr(href.indexOf('#') + 1);
+            }
+        }
+    }.bind(this);
+
+    window.addEventListener('click', this._clickListener);
+};
+
+//
+// Remove link click delegation if set
+//
+
+Router.prototype.unBindLinks = function () {
+    if (this._clickListener) {
+        removeEventListener('click', this._clickListener);
+        this._clickListener = null;
+    }
 };
 
 //
@@ -79,7 +154,9 @@ Router.prototype.run = function () {
 //
 
 Router.prototype.stop = function () {
-    window.removeEventListener('hashchange', this.hashListener);
+    window.removeEventListener(this._changeEvent, this._changeListener);
+    this.unBindLinks();
+
     return this;
 };
 
@@ -112,16 +189,51 @@ Router.prototype.setRoute = function (route, evt) {
 };
 
 //
+// Redirect to a given path
+//
+
+Router.prototype.goTo = function (path, push) {
+    if (this._html5) {
+        this._loc = path;
+    } else {
+        window.location.replace('#' + path);
+    }
+
+    this.recentReloads += 1;
+
+    if (this.resetTimer) {
+        clearTimeout(this.resetTimer);
+    }
+
+    this.resetTimer = setTimeout(function () {
+        this.recentReloads = 0;
+    }.bind(this), 500);
+
+    if (this.recentReloads > 10) {
+        this.stop();
+        throw new Error('Routy: Too many redirects. Stopping..');
+    }
+
+    this.refresh(push);
+};
+
+//
 // Parse the path, find the matching route and change if found
 //
 
-Router.prototype.refresh = function () {
-    var path = location.hash.slice(1),
+Router.prototype.refresh = function (push) {
+    var path = this.getPath(),
         route = this.getRouteByPath(path),
+        queryParts = location.href.split('?'),
+        query = queryParts.length > 1 ? queryParts[1] : null,
         evt;
 
+    if (query) {
+        path += '?' + query;
+    }
+
     if (!route) {
-        location.href = '#' + this.defaultPath;
+        this.goTo(this.defaultPath);
         return;
     }
 
@@ -131,12 +243,36 @@ Router.prototype.refresh = function () {
 
     this.emit('beforeChange', evt, this);
 
-    if (this.cancel) {
-        return;
+    if (this.cancel || this.redirect) {
+        var redirect = this.redirect;
+
+        this.cancel = false;
+        this.redirect = null;
+
+        if (this.cancel) {
+            return;
+        } else if (redirect) {
+            this.goTo(redirect);
+            return;
+        }
+    }
+
+    if (this._html5) {
+        var method = push ? 'pushState' : 'replaceState';
+
+        window.history[method]({}, null, path);
     }
 
     this.path = path;
     this.setRoute(route, evt);
+};
+
+Router.prototype.getPath = function () {
+    if (this._html5) {
+        return this._loc || location.pathname;
+    } else {
+        return location.hash.slice(1);
+    }
 };
 
 module.exports = {
