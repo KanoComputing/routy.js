@@ -1,10 +1,9 @@
 {
   "name": "routy",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A dead simple module to manage hash routing in the browser.",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "mkdir -p build; browserify lib/browser.js -o build/Routy.js; uglifyjs build/Routy.js -o build/Routy.min.js"
   },
   "author": "",
