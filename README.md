@@ -45,6 +45,29 @@ myRouter
 });
 ```
 
+### Extending routes
+
+You can extend routes options by using the `id` and `extends` keys inside your route options object.
+
+For example:
+
+```javascript
+myRouter
+
+// This route will be extended
+.add('/', {
+    id  : 'parent-route',
+    foo : 'bar',
+    bar : 'foo'
+})
+
+// This route will also contain a `foo` option set to 'bar'
+.add('/extended', {
+    extends : 'parent-root',
+    bar     : 'foo'
+})
+```
+
 ### Simple templates example
 
 `Routy.Router` instanciates as an event emitter.
