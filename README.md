@@ -6,7 +6,9 @@
 
 You can either use the module with npm
 
-    `npm install routy`
+```
+$ npm install routy
+```
 
 Or include the file `build/Routy.js` in your HTML (which provides a wrapper at `window.Routy`)
 
@@ -17,32 +19,32 @@ Or include the file `build/Routy.js` in your HTML (which provides a wrapper at `
 Bind functions to hashbang routes, execute them by changing the hash location to `#/path`.
 
 ```javascript
-var Router = Require('routy').Router;
+var Router = require('routy').Router;
 
 var myRouter = new Router();
 
-function index (route, req) {
+function index(route, req) {
     console.log(route); // The Route instance (containing path, custom options, ..)
     console.log(req);   // Will contained requested path, URL params, etc.. (If availabe, in different forms)
     console.log(this);  // The Router instance - also containing current `.path` and `.route`
 }
 
-function logParams (route, req) {
+function logParams(route, req) {
     console.log(req.namedParams);   // { apples: '..'}
 }
 
-function logOptions (route, req) {
+function logOptions(route, req) {
     // Access route custom options. Boom!
     console.log(route.options);  // { someOption: 'wooah' }
 }
 
 myRouter
-.add('/', index)
-.add('/foo/:apples', logParams)
-.add('/bar', logOptions, { someOption: 'wooah' })
-.on('change', function (req, route) {
-    console.log('Changing to path: ' + req.path);
-});
+    .add('/', index)
+    .add('/foo/:apples', logParams)
+    .add('/bar', logOptions, { someOption: 'wooah' })
+    .on('change', function (req, route) {
+        console.log('Changing to path: ' + req.path);
+    });
 ```
 
 ### Extending routes
@@ -53,24 +55,23 @@ For example:
 
 ```javascript
 myRouter
-
-// This route will be extended
-.add('/', {
-    id  : 'parent-route',
-    foo : 'bar',
-    bar : 'foo'
-})
-
-// This route will also contain a `foo` option set to 'bar'
-.add('/extended', {
-    extends : 'parent-root',
-    bar     : 'foo'
-})
+    // This route will be extended
+    .add('/', {
+        id  : 'parent-route',
+        foo : 'bar',
+        bar : 'foo'
+    })
+    
+    // This route will also contain a `foo` option set to 'bar'
+    .add('/extended', {
+        extends : 'parent-root',
+        bar     : 'foo'
+    })
 ```
 
 ### Simple templates example
 
-`Routy.Router` instanciates as an event emitter.
+`Routy.Router` instantiates as an event emitter.
 
 Intercept the `change` event and access custom route options to render a template.
 
@@ -83,13 +84,13 @@ var router = new Router(),
 // A full implementation would load templates from elsewhere
 
 router
-.add('/', { template: '<h1>Main</h1>' })
-.add('/foo', { template: '<h1>Foo</h1>' })
-.add('/bar', { template: '<h1>Bar</h1>' })
-.otherwise('/')
-.on('change', changeView);
+    .add('/', { template: '<h1>Main</h1>' })
+    .add('/foo', { template: '<h1>Foo</h1>' })
+    .add('/bar', { template: '<h1>Bar</h1>' })
+    .otherwise('/')
+    .on('change', changeView);
 
-function changeView (req) {
+function changeView(req) {
     view.innerHTML = req.route.options.template;
 }
 
@@ -113,7 +114,7 @@ router
 .otherwise('/')
 .on('beforeChange', intercept);
 
-function intercept (req) {
+function intercept(req) {
     if (req.route.options.requiresLogin) {
         // Use the router.redirect property to redirect to a different path
         router.redirect = '/login';
@@ -134,12 +135,12 @@ var Router = require('routy').Router;
 var router = new Router();
 
 router
-.add('/')
-.add('/locked')
-.otherwise('/')
-.on('beforeChange', intercept);
+    .add('/')
+    .add('/locked')
+    .otherwise('/')
+    .on('beforeChange', intercept);
 
-function intercept (req) {
+function intercept(req) {
     if (req.route.path === '/locked') {
         // Use the router.cancel property to prevent redirection
         router.cancel = true;
@@ -147,7 +148,6 @@ function intercept (req) {
 }
 
 router.run();
-
 ```
 
 ### HTML5 mode
@@ -166,11 +166,11 @@ var Router = require('routy').Router;
 var router = new Router();
 
 router
-.add('/')
-.add('/foo')
-.otherwise('/')
-.html5()
-.on('change', onChange);
+    .add('/')
+    .add('/foo')
+    .otherwise('/')
+    .html5()
+    .on('change', onChange);
 
 function onChange (req) {
     console.log(location.pathname);
@@ -178,7 +178,6 @@ function onChange (req) {
 }
 
 router.run();
-
 ```
 
 ## Router API
@@ -194,18 +193,18 @@ router.run();
 ## Develop
 
 1. Clone the repo and install the dependencies
-
-```
-git clone git@github.com:KanoComputing/routy.js.git
-cd routy.js
-npm install
-```
+    
+    ```
+    $ git clone git@github.com:KanoComputing/routy.js.git
+    $ cd routy.js
+    $ npm install
+    ```
 
 2. Update the build
-
-```
-npm run build
-```
+    
+    ```
+    $ npm run build
+    ```
 
 ## Licence
 
