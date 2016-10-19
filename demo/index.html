@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            .pages .page {
+                display: none;
+            }
+            .pages .page.selected {
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+    
+        <ul>
+            <li>
+                <a href="/foo">Simple link</a>
+            </li>
+            <li>
+                <a href="/bar">
+                    <div>
+                        <p>Link in sub elements</p>
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:4000/baz">Full url link</a>
+            </li>
+        </ul>
+
+        <div class="pages">
+            <div class="page" name="/">Index page</div>
+            <div class="page" name="/foo">Foo page</div>
+            <div class="page" name="/bar">Bar page</div>
+            <div class="page" name="/baz">Baz page</div>
+        </div>
+
+        <script src="../build/Routy.js"></script>
+        <script>
+            var router = new Routy.Router(),
+                pages = document.querySelector('.pages'),
+                prevPage;
+
+            router.add('/')
+                .add('/foo')
+                .add('/bar')
+                .add('/baz')
+                .otherwise('/')
+                .html5()
+                .on('change', onChange);
+
+            function onChange (req) {
+                if (prevPage) {
+                    prevPage.classList.remove('selected');
+                }
+                prevPage = pages.querySelector('[name="' + req.path + '"]');
+                if (prevPage) {
+                    prevPage.classList.add('selected');
+                }
+            }
+
+            router.run();
+        </script>
+    </body>
+</html>

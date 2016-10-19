@@ -1,8 +1,11 @@
 {
   "name": "routy",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "A dead simple module to manage hash routing in the browser.",
-  "repository": { "type" : "git", "url" : "https://github.com/KanoComputing/routy.js" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KanoComputing/routy.js"
+  },
   "main": "lib/index.js",
   "scripts": {
     "build": "mkdir -p build; browserify lib/browser.js -o build/Routy.js; uglifyjs build/Routy.js -o build/Routy.min.js"
@@ -10,11 +13,11 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "uglify-js": "~2.4.x",
-    "browserify": "~3.32.x"
+    "browserify": "^13.1.0",
+    "uglify-js": "^2.7.3"
   },
   "dependencies": {
-    "route-pattern": "0.0.x",
-    "tiny-emitter": "~0.1.x"
+    "route-pattern": "^0.0.6",
+    "tiny-emitter": "^1.1.0"
   }
 }
