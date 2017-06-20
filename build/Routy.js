@@ -1,27 +1,38 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 window.Routy = require('./index');
 },{"./index":2}],2:[function(require,module,exports){
 var RoutePattern = require('route-pattern'),
     EventEmitter = require('tiny-emitter');
 
-var EXCLUDE_PATTERN = /(^(?!http|\/\/|::|magnet:)(.*)$)/;
+var EXCLUDE_PATTERN = /(^(?!http|\/\/|::|[a-z]*:)(.*)$)/;
 
 //
 // Route class (Initialised by Router instances)
 //
 
-function Route () {
-    this.pattern = RoutePattern.fromString(arguments[0]);
-    this.options = {};
+function Route (pattern, base, fn, options) {
+    this.pattern = RoutePattern.fromString(pattern);
+    this.options = options || {};
+    this.fn = fn;
 
-    for (var i = 1; i < arguments.length; i += 1) {
-        if (typeof arguments[i] === 'object') {
-            this.options = arguments[i];
-        } else if (typeof arguments[i] === 'function') {
-            this.fn = arguments[i];
-        }
+    if (base) {
+        this.extendFrom(base);
     }
 }
+
+//
+// Extend funciton and options from given route instance
+//
+
+Route.prototype.extendFrom = function (route) {
+    this.fn = this.fn || route.fn;
+
+    for (var key in route.options) {
+        if (route.options.hasOwnProperty(key)) {
+            this.options[key] = this.options[key] || route.options[key];
+        }
+    }
+};
 
 //
 // Router class (Use to initialise routes and listen to Hash changes)
@@ -53,8 +64,41 @@ Router.prototype = new EventEmitter();
 //
 
 Router.prototype.add = function (pattern, fn, options) {
-    this.routes.push(new Route(pattern, fn, options));
+    var extendFrom;
+
+    if (typeof fn === 'object') {
+        var _fn = fn;
+        fn = options;
+        options = _fn;
+    }
+
+    if (options && options.extends) {
+        extendFrom = this.getRouteById(options.extends);
+
+        if (!extendFrom) {
+            throw new Error('Routy: Extending from unexisting route "' + extendFrom + '"');
+        }
+    }
+
+    var route = new Route(pattern, extendFrom, fn, options);
+
+    this.routes.push(route);
+
     return this;
+};
+
+//
+// Get a route by `id` field passed in `options
+//
+
+Router.prototype.getRouteById = function (id) {
+    for (var i = 0; i < this.routes.length; i += 1) {
+        if (this.routes[i].options.id === id) {
+            return this.routes[i];
+        }
+    }
+
+    return null;
 };
 
 //
@@ -71,6 +115,10 @@ Router.prototype.otherwise = function (path) {
 //
 
 Router.prototype.run = function () {
+    var queryParts = location.href.split('?');
+
+    this.query = queryParts.length > 1 ? queryParts[1] : null;
+
     this.refresh();
 
     if (this._html5) {
@@ -119,7 +167,7 @@ Router.prototype.bindLinks = function () {
     }
 
     this._clickListener = function (e) {
-        var href = e.target.getAttribute('href'),
+        var href = getHrefRec(e.target),
             blankTarget = e.target.getAttribute('target') === '_blank',
             specialKey = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
 
@@ -137,6 +185,24 @@ Router.prototype.bindLinks = function () {
 
     window.addEventListener('click', this._clickListener);
 };
+
+//
+// Search recursively href attribute value between given element and parents
+//
+
+function getHrefRec(element) {
+    var href = element.getAttribute('href');
+
+    if (href) {
+        return href.replace(location.origin, '');
+    }
+
+    if (element.parentElement && element.parentElement !== document.body) {
+        return getHrefRec(element.parentElement);
+    }
+
+    return null;
+}
 
 //
 // Remove link click delegation if set
@@ -193,11 +259,15 @@ Router.prototype.setRoute = function (route, evt) {
 //
 
 Router.prototype.goTo = function (path, push) {
+    var query = path.split('?')[1] || null;
+
     if (this._html5) {
         this._loc = path;
     } else {
         window.location.replace('#' + path);
     }
+
+    this.query = query;
 
     this.recentReloads += 1;
 
@@ -224,12 +294,12 @@ Router.prototype.goTo = function (path, push) {
 Router.prototype.refresh = function (push) {
     var path = this.getPath(),
         route = this.getRouteByPath(path),
-        queryParts = location.href.split('?'),
-        query = queryParts.length > 1 ? queryParts[1] : null,
         evt;
 
-    if (query) {
-        path += '?' + query;
+    path = path ? path.split('?')[0] : null;
+
+    if (this.query) {
+        path += '?' + this.query;
     }
 
     if (!route) {
@@ -246,10 +316,10 @@ Router.prototype.refresh = function (push) {
     if (this.cancel || this.redirect) {
         var redirect = this.redirect;
 
-        this.cancel = false;
         this.redirect = null;
 
         if (this.cancel) {
+            this.cancel = false;
             return;
         } else if (redirect) {
             this.goTo(redirect);
@@ -276,8 +346,8 @@ Router.prototype.getPath = function () {
 };
 
 module.exports = {
-    Router: Router,
-    Route: Route
+    Router : Router,
+    Route  : Route
 };
 },{"route-pattern":6,"tiny-emitter":7}],3:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
@@ -416,7 +486,7 @@ module.exports = function(obj, sep, eq, name) {
     return map(objectKeys(obj), function(k) {
       var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
       if (isArray(obj[k])) {
-        return obj[k].map(function(v) {
+        return map(obj[k], function(v) {
           return ks + encodeURIComponent(stringifyPrimitive(v));
         }).join(sep);
       } else {
@@ -832,30 +902,31 @@ RoutePattern.RegExpPattern = RegExpPattern;
 
 },{"querystring":5}],7:[function(require,module,exports){
 function E () {
-	// Keep this empty so it's easier to inherit from
+  // Keep this empty so it's easier to inherit from
   // (via https://github.com/lipsmack from https://github.com/scottcorgan/tiny-emitter/issues/3)
 }
 
 E.prototype = {
-	on: function (name, callback, ctx) {
+  on: function (name, callback, ctx) {
     var e = this.e || (this.e = {});
-    
+
     (e[name] || (e[name] = [])).push({
       fn: callback,
       ctx: ctx
     });
-    
+
     return this;
   },
 
   once: function (name, callback, ctx) {
     var self = this;
-    var fn = function () {
-      self.off(name, fn);
+    function listener () {
+      self.off(name, listener);
       callback.apply(ctx, arguments);
     };
-    
-    return this.on(name, fn, ctx);
+
+    listener._ = callback
+    return this.on(name, listener, ctx);
   },
 
   emit: function (name) {
@@ -863,11 +934,11 @@ E.prototype = {
     var evtArr = ((this.e || (this.e = {}))[name] || []).slice();
     var i = 0;
     var len = evtArr.length;
-    
+
     for (i; i < len; i++) {
       evtArr[i].fn.apply(evtArr[i].ctx, data);
     }
-    
+
     return this;
   },
 
@@ -875,25 +946,26 @@ E.prototype = {
     var e = this.e || (this.e = {});
     var evts = e[name];
     var liveEvents = [];
-    
+
     if (evts && callback) {
       for (var i = 0, len = evts.length; i < len; i++) {
-        if (evts[i].fn !== callback) liveEvents.push(evts[i]);
+        if (evts[i].fn !== callback && evts[i].fn._ !== callback)
+          liveEvents.push(evts[i]);
       }
     }
-    
+
     // Remove event from queue to prevent memory leak
     // Suggested by https://github.com/lazd
     // Ref: https://github.com/scottcorgan/tiny-emitter/commit/c6ebfaa9bc973b33d110a84a307742b7cf94c953#commitcomment-5024910
 
-    (liveEvents.length) 
+    (liveEvents.length)
       ? e[name] = liveEvents
       : delete e[name];
-    
+
     return this;
   }
 };
 
 module.exports = E;
 
-},{}]},{},[1])
+},{}]},{},[1]);
