@@ -1,6 +1,6 @@
 {
   "name": "routy",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A dead simple module to manage hash routing in the browser.",
   "repository": {
     "type": "git",
